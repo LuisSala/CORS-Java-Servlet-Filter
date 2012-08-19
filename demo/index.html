@@ -1,0 +1,168 @@
+<html>
+	<head>
+		<title>CORS Filter Demo</title>
+		
+		<style type="text/css">
+			body { font-family: sans-serif; font-size: 12px; line-height: 160% }
+			h1 { margin: 25px 0 25px 0 }
+			p, ul { width: 560px }
+			ul { font-size: 10px }
+			#form { margin-top: 20px; margin-bottom: 25px; }
+			#url { background: #e6f4ff }
+			input[type=button] { font-weight: bold }
+		</style>
+		
+		<script type="text/javascript">
+		
+			function init() {
+			
+				var url="http://localhost:8080/cors-demo/cors-resource.html";
+				
+				document.getElementById("url").value = url;
+			}
+			
+			
+			function log(message) {
+			
+				var log = document.getElementById("log");
+				log.innerHTML = log.innerHTML + message + "\n";
+			}
+			
+			
+			function clearLog() {
+			
+				document.getElementById("log").innerHTML = "";
+			}
+			
+			
+			function displayResponse(response) {
+				
+				document.getElementById("response-body").innerHTML = response;
+			}
+			
+			
+			function displayResponseHeaders(responseHeaders) {
+				
+				if (responseHeaders == null )
+					responseHeaders = "[Not available]";
+				
+				document.getElementById("response-headers").innerHTML = responseHeaders;
+			}
+			
+			
+			function makeRequest() {
+			
+				clearLog();
+				
+				var url = document.getElementById("url").value;
+				
+				var method = document.getElementById("method").value;
+				
+				log("Preparing to make HTTP " + method + " request to " + url);
+				
+				if (XMLHttpRequest === null) {
+					log("Browser doesn't support XMLHttpRequest");
+					return;
+				}
+				
+				var request = new XMLHttpRequest();
+				
+				if ("withCredentials" in request) {
+				
+					log("Detected browser with CORS support");
+					
+					request.open(method, url);
+					request.onreadystatechange = function() {
+						if (this.readyState == 3) {
+							log("Received response headers");
+							
+						}
+						if (this.readyState == 4) {
+							log("Request completed with HTTP status " + this.status);
+							displayResponse(this.responseText);
+							displayResponseHeaders(this.getAllResponseHeaders());
+						}
+					}
+					request.send();
+					log("Request sent");
+				}
+				else if (XDomainRequest) {
+				
+					log("Detected IE browser with limited CORS support");
+					
+					var xdr = new XDomainRequest();
+					xdr.open(method, url);
+					xdr.onload = function() {
+						log("XDR request completed");
+						displayResponse(this.responseText);
+					}
+					xdr.onerror = function() {
+						log("XDR error");
+					}
+					xdr.send();
+					log("XDR request sent");
+				}
+				else {
+					log("Browser doesn't support CORS, request aborted");
+					return;
+				}
+			}
+		
+		</script>
+		
+		
+	</head>
+	
+	<body onload="init()">
+	
+		<h1>CORS Filter Demo</h1>
+		
+		<p>This web page allows you to make a simple cross-site request to a CORS-enabled
+		HTTP URL residing on another site. The response content-type is expected to 
+		be <em>text/plain</em>.</p>
+		
+		<p>To test the CORS-enabled URL supplied with this demo enter</p>
+		
+		<p><code>http(s)://&lt;your-server-host:port&gt;/cors-demo/cors-resource.html</code></p>
+		
+		<p>Tips:</p>
+		
+		<ul>
+			<li>Major browsers with CORS support: FireFox 3.5+ / Safari 4+ / Chrome 3+ / IE 8 (limited, via XDR object)</li>
+			<li>The CORS filter demo includes both the requesting page and the 
+			    CORS-enabled servlet within the same WAR package. An easy way to simulate
+			    a cross-site origin, without using a second server, is to create a host 
+			    alias of your web server and reload this page using the alias URL.</li>
+		</ul>
+		
+		
+		<p id="form"><strong>Cross-site URL</strong> <input id="url" type="text" size="40"/>
+		<select id="method">
+			<option>GET</option>
+			<option>HEAD</option>
+			<option>POST</option>
+			<option>PUT</option>
+			<option>DELETE</option>
+			<option>OPTIONS</option>
+		</select>
+		<input type="button" value="Go!" onclick="makeRequest()"/>
+		</p>
+		
+		<p>Response headers <small>(if available, some may be filtered out by the browser)</small><br/>
+		<textarea id="response-headers" readonly="true" cols="80" rows="5"></textarea>
+		</p>
+		
+		<p>Response body <small>(as text/plain)</small><br/>
+		<textarea id="response-body" readonly="true" cols="80" rows="10"></textarea>
+		</p>
+		
+		<p>Log<br/>
+		<textarea id="log" readonly="true" cols="80" rows="8"></textarea>
+		</p>
+		
+		<p><small>To find out more about the CORS Filter software go to
+		<a href="http://software.dzhuvinov.com/cors-filter.html">http://software.dzhuvinov.com/cors-filter.html</a></small></p>
+		
+	
+	</body>
+</html>
